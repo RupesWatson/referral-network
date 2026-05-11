@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Network Mapper</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .page-container { display: flex; height: 100vh; overflow: hidden; }
+
+        /* ── Left Sidebar ── */
+        .left-sidebar {
+            width: 280px;
+            background: #fff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .form-container {
+            padding: 16px;
+            flex: 0 1 auto;
+            max-height: 52vh;
+            overflow-y: auto;
+        }
+
+        .form-scroll-buttons {
+            display: flex;
+            gap: 4px;
+            padding: 4px 16px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #e5e7eb;
+            justify-content: center;
+        }
+
+        .form-scroll-buttons button {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .form-scroll-buttons button:hover { background: #e5e7eb; }
+        .form-group { margin-bottom: 12px; }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888780;
+            margin-bottom: 4px;
+        }
+
+        input[type="text"], input[type="email"], input[type="date"],
+        input[type="number"], select, textarea {
+            width: 100%;
+            font-size: 13px;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-family: inherit;
+            color: #333;
+        }
+
+        textarea { resize: vertical; min-height: 60px; }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #185fa5;
+            box-shadow: 0 0 0 2px rgba(24,95,165,0.1);
+        }
+
+        .star-picker { display: flex; gap: 4px; margin-bottom: 8px; }
+
+        .star-picker button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #e5e7eb;
+            padding: 0;
+            transition: color 0.2s;
+        }
+
+        .star-picker button.active, .star-picker button:hover { color: #185fa5; }
+
+        .btn { padding: 10px 12px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #185fa5; color: white; width: 100%; margin-top: 8px; }
+        .btn-primary:hover { background: #0c447c; }
+        .btn-secondary { background: #f3f4f6; color: #333; padding: 8px 12px; font-size: 12px; }
+        .btn-secondary:hover { background: #e5e7eb; }
+
+        .divider {
+            margin: 8px 0;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888780;
+        }
+
+        .people-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 16px; }
+
+        .person-card {
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .person-card:hover { background: #f3f4f6; }
+        .person-card.selected { background: #e6f1fb; border-color: #185fa5; }
+
+        .person-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 11px; font-weight: 600; flex-shrink: 0;
+        }
+
+        .person-avatar.org-avatar { border-radius: 4px; }
+        .person-info { flex: 1; min-width: 0; }
+        .person-name { font-size: 12px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .person-meta { font-size: 11px; color: #888780; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .person-type { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 2px; }
+
+        .type-client       { background: #e6f1fb; color: #0c447c; }
+        .type-prospect     { background: #e1f5ee; color: #085041; }
+        .type-referrer     { background: #faece7; color: #712b13; }
+        .type-adviser      { background: #eeedfe; color: #3c3489; }
+        .type-jpmorgan     { background: #dce9f5; color: #003087; }
+        .type-organisation { background: #f0f0f0; color: #374151; }
+
+        .person-actions { display: none; flex-direction: column; gap: 4px; }
+        .person-card:hover .person-actions { display: flex; }
+
+        .action-btn { background: none; border: none; cursor: pointer; color: #888780; padding: 4px; transition: color 0.2s; }
+        .action-btn:hover { color: #185fa5; }
+
+        .sidebar-footer { padding: 12px 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #888780; }
+        .save-indicator { margin-bottom: 8px; }
+        .clear-data-btn { color: #993c1d; cursor: pointer; text-decoration: underline; background: none; border: none; font-size: 11px; padding: 0; }
+        .clear-data-btn:hover { color: #712b13; }
+
+        /* Conditional form sections */
+        .jpmorgan-fields, .org-fields, .common-fields { }
+        .jpmorgan-fields { display: none; }
+        .org-fields      { display: none; }
+        .jpmorgan-fields.visible { display: block; }
+        .org-fields.visible      { display: block; }
+
+        /* When jpmorgan or org type selected, hide common fields */
+        .common-fields.hidden { display: none; }
+
+        .conditional-section-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.07em; color: #003087; background: #dce9f5;
+            padding: 4px 8px; border-radius: 4px; margin-bottom: 8px;
+        }
+
+        .org-section-label { color: #374151; background: #f0f0f0; }
+
+        /* ── Centre Panel ── */
+        .center-panel { flex: 1; display: flex; flex-direction: column; background: #f8f9fa; overflow: hidden; }
+
+        .canvas-toolbar {
+            padding: 10px 16px;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .filter-pill {
+            padding: 5px 10px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .filter-pill[data-filter="all"].active,
+        .filter-pill[data-filter="all"]:hover       { background: #185fa5; color: #fff; border-color: #185fa5; }
+        .filter-pill[data-filter="client"].active,
+        .filter-pill[data-filter="client"]:hover    { background: #185FA5; color: #fff; border-color: #185FA5; }
+        .filter-pill[data-filter="prospect"].active,
+        .filter-pill[data-filter="prospect"]:hover  { background: #0F6E56; color: #fff; border-color: #0F6E56; }
+        .filter-pill[data-filter="referrer"].active,
+        .filter-pill[data-filter="referrer"]:hover  { background: #993C1D; color: #fff; border-color: #993C1D; }
+        .filter-pill[data-filter="adviser"].active,
+        .filter-pill[data-filter="adviser"]:hover   { background: #534AB7; color: #fff; border-color: #534AB7; }
+        .filter-pill[data-filter="jpmorgan"].active,
+        .filter-pill[data-filter="jpmorgan"]:hover  { background: #003087; color: #fff; border-color: #003087; }
+        .filter-pill[data-filter="organisation"].active,
+        .filter-pill[data-filter="organisation"]:hover { background: #6B7280; color: #fff; border-color: #6B7280; }
+
+        .toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .toolbar-button {
+            padding: 6px 10px; background: #f3f4f6; border: 1px solid #e5e7eb;
+            border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+            transition: all 0.2s; white-space: nowrap;
+        }
+
+        .toolbar-button:hover { background: #185fa5; color: #fff; border-color: #185fa5; }
+        .toolbar-button.link-active { background: #f59e0b; color: #fff; border-color: #d97706; }
+
+        .toolbar-select {
+            padding: 6px 8px; background: #f3f4f6; border: 1px solid #e5e7eb;
+            border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #333;
+        }
+
+        #canvas-container { flex: 1; position: relative; overflow: hidden; }
+        #canvas-container.link-mode { cursor: crosshair; }
+        svg { width: 100%; height: 100%; display: block; }
+
+        .empty-state {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            text-align: center; color: #888780; pointer-events: none;
+        }
+
+        .empty-state-circle { width: 200px; height: 200px; border: 2px dashed #e5e7eb; border-radius: 50%; margin: 0 auto 16px; }
+
+        /* ── Legend ── */
+        .legend-overlay {
+            position: absolute; bottom: 16px; left: 16px;
+            background: rgba(255,255,255,0.97); border: 1px solid #e5e7eb;
+            border-radius: 8px; padding: 10px 12px; font-size: 11px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); min-width: 165px; z-index: 10;
+        }
+
+        .legend-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .legend-header span { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #888780; }
+        .legend-toggle { background: none; border: none; cursor: pointer; font-size: 14px; color: #888780; line-height: 1; padding: 0 2px; }
+        .legend-section-title { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #aaa; margin: 8px 0 6px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #444; font-size: 11px; }
+
+        .legend-line { display: inline-block; width: 36px; height: 0; flex-shrink: 0; position: relative; }
+        .legend-line.referred  { border-top: 2px solid #185FA5; }
+        .legend-line.referred::after { content:'▶'; position:absolute; right:-5px; top:-8px; font-size:9px; color:#185FA5; }
+        .legend-line.knows     { border-top: 2px dashed #888780; }
+        .legend-line.colleague { border-top: 2px solid #0F6E56; }
+        .legend-line.adviser-to { border-top: 0; background: repeating-linear-gradient(90deg,#534AB7 0,#534AB7 2px,transparent 2px,transparent 6px); height: 2px; }
+        .legend-line.family    { border-top: 3px solid #993C1D; }
+        .legend-line.covers    { border-top: 0; background: repeating-linear-gradient(90deg,#003087 0,#003087 4px,transparent 4px,transparent 8px); height: 2px; }
+
+        .legend-dot  { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .legend-rect { display: inline-block; width: 18px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+        .legend-body.collapsed { display: none; }
+
+        /* Link tip */
+        .link-tip {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            background: #f59e0b; color: white; padding: 6px 14px; border-radius: 20px;
+            font-size: 12px; font-weight: 600; pointer-events: none; z-index: 20; display: none;
+        }
+
+        .link-tip.visible { display: block; }
+
+        /* ── Right Sidebar ── */
+        .right-sidebar {
+            width: 300px; background: #fff; border-left: 1px solid #e5e7eb;
+            display: flex; flex-direction: column; overflow-y: auto; padding: 16px;
+        }
+
+        .insights-strip { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+        .insight-card { background: #f3f4f6; padding: 8px; border-radius: 6px; font-size: 12px; }
+        .insight-label { font-weight: 600; color: #888780; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; margin-bottom: 2px; }
+        .insight-value { color: #333; font-weight: 600; }
+
+        .detail-placeholder { text-align: center; color: #888780; padding: 40px 20px; }
+        .detail-panel { display: none; flex: 1; overflow-y: auto; }
+        .detail-panel.active { display: flex; flex-direction: column; }
+
+        .detail-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+
+        .detail-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: 600; flex-shrink: 0; }
+        .detail-avatar.org  { border-radius: 6px; }
+        .detail-avatar.edge { border-radius: 6px; font-size: 22px; }
+
+        .detail-title { flex: 1; }
+        .detail-name { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 4px; }
+        .detail-org  { font-size: 12px; color: #888780; }
+
+        .detail-section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888780; margin-top: 16px; margin-bottom: 8px; }
+        .detail-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 12px; flex-wrap: wrap; }
+        .star-display { display: flex; gap: 4px; }
+        .star-display .ti { font-size: 14px; color: #185fa5; }
+
+        .detail-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+
+        .detail-actions button {
+            flex: 1; padding: 8px; font-size: 12px; font-weight: 600;
+            border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;
+            background: #f3f4f6; transition: all 0.2s;
+        }
+
+        .detail-actions button:hover { background: #e5e7eb; }
+        .detail-actions button.delete:hover { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+
+        .edit-mode input, .edit-mode select, .edit-mode textarea { font-size: 12px; padding: 6px; width: 100%; margin-bottom: 8px; }
+
+        /* Selected edge panel */
+        .edge-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: #fff3cd; color: #7a4f00; border: 1px solid #fcd34d; }
+
+        .warning-text { color: #d97706; font-size: 11px; margin-top: 4px; }
+
+        /* ── Modal ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: white; border-radius: 8px; padding: 24px;
+            max-width: 420px; width: 90%; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+        }
+
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #333; }
+        .modal-subtitle { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.5; }
+        .modal-form-group { margin-bottom: 16px; }
+
+        .modal-form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #333; }
+        .modal-form-group input, .modal-form-group select, .modal-form-group textarea { width: 100%; font-size: 13px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-family: inherit; }
+
+        .modal-buttons { display: flex; gap: 8px; margin-top: 20px; }
+        .modal-buttons button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .modal-buttons .btn-primary  { background: #185fa5; color: white; margin-top: 0; width: auto; }
+        .modal-buttons .btn-secondary{ background: #f3f4f6; color: #333; width: auto; }
+
+        /* ── Export ── */
+        .export-buttons { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+        .export-button { flex: 1; padding: 8px; font-size: 11px; font-weight: 600; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .export-button:hover { background: #e5e7eb; }
+
+        .node { cursor: pointer; }
+        .node:hover { filter: brightness(1.1); }
+
+        .connection-note { font-size: 11px; color: #888780; margin-bottom: 8px; }
+        .referral-pathway-item { padding: 6px; background: #f3f4f6; border-radius: 4px; margin-bottom: 4px; font-size: 12px; }
+
+        #contextMenu button:hover { background: #f3f4f6; }
+        #contextMenu button:first-child { border-radius: 6px 6px 0 0; }
+        #contextMenu button:last-child  { border-radius: 0 0 6px 6px; border-bottom: none; }
+    </style>
+</head>
+<body>
+<div class="page-container">
+
+    <!-- ══ LEFT SIDEBAR ══ -->
+    <div class="left-sidebar">
+        <div class="form-container" id="formContainer">
+            <form id="addPersonForm">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select name="type" id="typeSelect" required>
+                        <option value="">Select type</option>
+                        <option value="client">Client</option>
+                        <option value="prospect">Prospect</option>
+                        <option value="referrer">Referrer</option>
+                        <option value="adviser">Adviser</option>
+                        <option value="jpmorgan">JP Morgan Contact</option>
+                        <option value="organisation">Organisation / Firm</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Organisation</label>
+                    <input type="text" name="organisation" id="orgNameInput" placeholder="e.g. Acme Capital">
+                </div>
+
+                <!-- Fields hidden for JP Morgan / Organisation types -->
+                <div class="common-fields" id="commonFields">
+                    <div class="form-group">
+                        <label>Sector</label>
+                        <input type="text" name="sector" placeholder="e.g. Private equity" list="sectorList">
+                        <datalist id="sectorList">
+                            <option value="Private equity">
+                            <option value="Hedge fund">
+                            <option value="Tech founder">
+                            <option value="Real estate">
+                            <option value="Legal">
+                            <option value="Accounting">
+                            <option value="Family office">
+                            <option value="Banking">
+                            <option value="Corporate">
+                            <option value="Insurance">
+                            <option value="Other">
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated AUM</label>
+                        <input type="text" name="estimatedAUM" placeholder="e.g. >£50m">
+                    </div>
+                    <div class="form-group">
+                        <label>Engagement</label>
+                        <div class="star-picker" id="engagementPicker">
+                            <button type="button" class="star-btn" data-value="1"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="2"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="3"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="4"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="5"><i class="ti ti-star"></i></button>
+                        </div>
+                        <input type="hidden" name="engagementScore" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label>Referral Likelihood</label>
+                        <div class="star-picker" id="referralPicker">
+                            <button type="button" class="star-btn" data-value="1"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="2"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="3"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="4"><i class="ti ti-star"></i></button>
+                            <button type="button" class="star-btn" data-value="5"><i class="ti ti-star"></i></button>
+                        </div>
+                        <input type="hidden" name="referralLikelihood" value="3">
+                    </div>
+                </div>
+
+                <!-- JP Morgan specific -->
+                <div class="jpmorgan-fields" id="jpmorganFields">
+                    <div class="conditional-section-label">JP Morgan Details</div>
+                    <div class="form-group">
+                        <label>Role / Title</label>
+                        <input type="text" name="jpmTitle" placeholder="e.g. Managing Director">
+                    </div>
+                    <div class="form-group">
+                        <label>Area of Focus</label>
+                        <select name="areaOfFocus">
+                            <option value="">Select focus</option>
+                            <option value="Hedge Funds">Hedge Funds</option>
+                            <option value="Private Equity">Private Equity</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Family Office">Family Office</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Banking">Banking</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Corporate">Corporate</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Firms / Clients Covered</label>
+                        <textarea name="firmsCovered" placeholder="e.g. Bridgewater, Man Group, Citadel&#10;(matched to existing orgs automatically)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Engagement Level</label>
+                        <select name="jpmEngagement">
+                            <option value="warm">Warm – active dialogue</option>
+                            <option value="active">Active – frequent contact</option>
+                            <option value="cold">Cold – no recent contact</option>
+                            <option value="prospect">Prospect – not yet engaged</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Organisation specific -->
+                <div class="org-fields" id="orgFields">
+                    <div class="conditional-section-label org-section-label">Organisation Details</div>
+                    <div class="form-group">
+                        <label>Industry</label>
+                        <input type="text" name="industry" placeholder="e.g. Asset Management">
+                    </div>
+                    <div class="form-group">
+                        <label>AUM / Size</label>
+                        <input type="text" name="estimatedAUM" placeholder="e.g. >£50m">
+                    </div>
+                    <div class="form-group">
+                        <label>Website</label>
+                        <input type="text" name="website" placeholder="e.g. acme.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Key Contacts</label>
+                        <textarea name="keyContacts" placeholder="e.g. James Hartley, Sarah Chen"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Introduced By</label>
+                    <select name="introducedBy" id="introducedBySelect">
+                        <option value="">None</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" placeholder="Any notes"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add to Network</button>
+            </form>
+        </div>
+
+        <div class="form-scroll-buttons">
+            <button id="scrollFormUp"><i class="ti ti-chevron-up"></i></button>
+            <button id="scrollFormDown"><i class="ti ti-chevron-down"></i></button>
+        </div>
+
+        <div class="divider" style="padding: 0 16px;">Network</div>
+        <div class="people-list" id="peopleList"></div>
+
+        <div class="sidebar-footer">
+            <div class="save-indicator" id="saveIndicator">Never saved</div>
+            <button class="clear-data-btn" id="clearDataBtn">Clear all data</button>
+        </div>
+    </div>
+
+    <!-- ══ CENTRE PANEL ══ -->
+    <div class="center-panel">
+        <div class="canvas-toolbar">
+            <div class="filter-pills" id="filterPills">
+                <button class="filter-pill active" data-filter="all">All</button>
+                <button class="filter-pill" data-filter="client">Clients</button>
+                <button class="filter-pill" data-filter="prospect">Prospects</button>
+                <button class="filter-pill" data-filter="referrer">Referrers</button>
+                <button class="filter-pill" data-filter="adviser">Advisers</button>
+                <button class="filter-pill" data-filter="jpmorgan">JP Morgan</button>
+                <button class="filter-pill" data-filter="organisation">Orgs</button>
+            </div>
+            <div class="toolbar-right">
+                <select class="toolbar-select" id="layoutSelect">
+                    <option value="free">Layout: Free</option>
+                    <option value="by-type">By Type</option>
+                    <option value="clients-prospects">Clients → Prospects</option>
+                    <option value="referrers-hub">Referrers Hub</option>
+                    <option value="jpmorgan-view">JP Morgan View</option>
+                </select>
+                <button class="toolbar-button" id="linkNodesBtn">🔗 Link nodes</button>
+                <button class="toolbar-button" id="addConnectionBtn">+ Add connection</button>
+                <button class="toolbar-button" id="fitToScreenBtn">Fit to screen</button>
+            </div>
+        </div>
+
+        <div id="canvas-container">
+            <svg id="canvas"></svg>
+            <div class="empty-state" id="emptyState">
+                <div class="empty-state-circle"></div>
+                <div>Add people using the form on the left to start building your network.</div>
+            </div>
+            <div class="link-tip" id="linkTip">Click the first node, then the second to connect them</div>
+
+            <!-- Legend -->
+            <div class="legend-overlay">
+                <div class="legend-header">
+                    <span>Legend</span>
+                    <button class="legend-toggle" id="legendToggleBtn">−</button>
+                </div>
+                <div id="legendBody">
+                    <div class="legend-section-title">Connections</div>
+                    <div class="legend-item"><span class="legend-line referred"></span> Referred</div>
+                    <div class="legend-item"><span class="legend-line knows"></span> Knows</div>
+                    <div class="legend-item"><span class="legend-line colleague"></span> Colleague</div>
+                    <div class="legend-item"><span class="legend-line adviser-to"></span> Adviser to</div>
+                    <div class="legend-item"><span class="legend-line family"></span> Family</div>
+                    <div class="legend-item"><span class="legend-line covers"></span> JPM Covers</div>
+                    <div class="legend-section-title">Node Types</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#185FA5"></span> Client</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#0F6E56"></span> Prospect</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#993C1D"></span> Referrer</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#534AB7"></span> Adviser</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#003087"></span> JP Morgan</div>
+                    <div class="legend-item"><span class="legend-rect" style="background:#6B7280"></span> Organisation</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ RIGHT SIDEBAR ══ -->
+    <div class="right-sidebar">
+        <div class="insights-strip">
+            <div class="insight-card">
+                <div class="insight-label">Top Referrer</div>
+                <div class="insight-value" id="topReferrerValue">None yet</div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-label">Warmest Prospect</div>
+                <div class="insight-value" id="warmestProspectValue">None yet</div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-label">Network Gaps</div>
+                <div class="insight-value" id="networkGapsValue">0 prospects isolated</div>
+            </div>
+        </div>
+
+        <div class="detail-placeholder" id="detailPlaceholder">Click any node or connection to see details</div>
+
+        <div class="detail-panel" id="detailPanel">
+            <div class="detail-header">
+                <div class="detail-avatar" id="detailAvatar"></div>
+                <div class="detail-title">
+                    <div class="detail-name" id="detailName"></div>
+                    <div class="detail-org"  id="detailOrg"></div>
+                    <div id="detailTypeContainer"></div>
+                </div>
+            </div>
+            <div id="detailContent"></div>
+            <div class="detail-actions" id="detailActions">
+                <button id="editBtn">Edit</button>
+                <button id="deleteBtn" class="delete">Delete</button>
+            </div>
+        </div>
+
+        <div class="export-buttons">
+            <button class="export-button" id="exportSummaryBtn">Copy summary</button>
+            <button class="export-button" id="exportJsonBtn">Export JSON</button>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" style="display:none;position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 10px 15px rgba(0,0,0,.1);z-index:2000;min-width:180px;">
+    <button id="contextEdit"            style="display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-bottom:1px solid #e5e7eb;">Edit</button>
+    <button id="contextDelete"          style="display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-bottom:1px solid #e5e7eb;color:#dc2626;">Delete</button>
+    <button id="contextAddConnection"   style="display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-bottom:1px solid #e5e7eb;">Add connection</button>
+    <button id="contextLinkNodes"       style="display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;cursor:pointer;font-size:13px;border-bottom:1px solid #e5e7eb;">Link to another node…</button>
+    <button id="contextViewConnections" style="display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;cursor:pointer;font-size:13px;">View connections</button>
+</div>
+
+<!-- Connection Modal -->
+<div class="modal-overlay" id="connectionModal">
+    <div class="modal-content">
+        <div class="modal-title">Add Connection</div>
+        <form id="connectionForm">
+            <div class="modal-form-group">
+                <label>From *</label>
+                <select id="sourceNodeId" required><option value="">Select person / org</option></select>
+            </div>
+            <div class="modal-form-group">
+                <label>To *</label>
+                <select id="targetNodeId" required><option value="">Select person / org</option></select>
+            </div>
+            <div class="modal-form-group">
+                <label>Relationship Type *</label>
+                <select id="relationshipType" required>
+                    <option value="">Select type</option>
+                    <option value="referred">Referred</option>
+                    <option value="knows">Knows</option>
+                    <option value="colleague">Colleague</option>
+                    <option value="adviser-to">Adviser to</option>
+                    <option value="family">Family</option>
+                    <option value="covers">JPM Covers</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Strength *</label>
+                <select id="strength" required>
+                    <option value="">Select strength</option>
+                    <option value="1">1 – Distant</option>
+                    <option value="2">2 – Solid</option>
+                    <option value="3">3 – Close</option>
+                </select>
+            </div>
+            <div class="connection-note" id="directionNote"></div>
+            <div class="modal-form-group">
+                <label>Notes</label>
+                <textarea id="connectionNotes" placeholder="Any notes about this relationship"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn btn-primary">Add connection</button>
+                <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Org duplicate modal -->
+<div class="modal-overlay" id="orgDuplicateModal">
+    <div class="modal-content">
+        <div class="modal-title">Organisation already exists</div>
+        <div class="modal-subtitle" id="orgDuplicateMsg"></div>
+        <form id="orgDuplicateForm">
+            <div class="modal-form-group">
+                <label>What is the connection between them?</label>
+                <select id="orgDupRelType" required>
+                    <option value="refers">Referred / Introduced</option>
+                    <option value="knows">Knows / Associated</option>
+                    <option value="colleague">Same group / Colleague</option>
+                    <option value="adviser-to">Adviser relationship</option>
+                    <option value="family">Family / related</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Strength</label>
+                <select id="orgDupStrength">
+                    <option value="1">1 – Distant</option>
+                    <option value="2" selected>2 – Solid</option>
+                    <option value="3">3 – Close</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="btn btn-primary">Create connection</button>
+                <button type="button" class="btn btn-secondary" id="orgDupSkipBtn">Add anyway (no connection)</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// ============================================================================
+// STATE
+// ============================================================================
+
+const appState = {
+    simulation: { nodes: new Map(), edges: new Map(), temperature: 1.0, tickCount: 0, maxVelocity: 1.0 },
+    selectedNodeId: null,
+    selectedEdgeId: null,
+    detailMode: null,        // 'node' | 'edge' | null
+    filter: 'all',
+    dirty: false,
+    autosaveTimer: null,
+    draggingNodeId: null,
+    panX: 0, panY: 0,
+    zoomLevel: 1.0,
+    animationRunning: true,
+    lastSaveTime: null,
+    linkMode: false,
+    linkSourceNodeId: null,
+    pendingOrgNode: null    // used during org-duplicate check
+};
+
+const TYPE_COLORS = {
+    client:       { fill: '#185FA5', light: '#E6F1FB' },
+    prospect:     { fill: '#0F6E56', light: '#E1F5EE' },
+    referrer:     { fill: '#993C1D', light: '#FAECE7' },
+    adviser:      { fill: '#534AB7', light: '#EEEDFE' },
+    jpmorgan:     { fill: '#003087', light: '#DCE9F5' },
+    organisation: { fill: '#6B7280', light: '#F0F0F0' }
+};
+
+const SAMPLE_DATA = {
+    nodes: [
+        { id:'n1', name:'James Hartley',  type:'client',       organisation:'Hartley Capital',  sector:'Private equity',  estimatedAUM:'>£50m',  engagementScore:5, referralLikelihood:4, notes:'Long-standing client, well connected in PE', introducedBy:null, areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:0,    y:0,    vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n2', name:'Sarah Chen',     type:'prospect',     organisation:'Meridian Ventures', sector:'Venture capital', estimatedAUM:'£25–50m',engagementScore:3, referralLikelihood:2, notes:'', introducedBy:'n1', areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:160,  y:80,   vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n3', name:'Robert Okafor',  type:'referrer',     organisation:'Okafor & Partners', sector:'Legal',           estimatedAUM:'',       engagementScore:4, referralLikelihood:5, notes:'Top referrer — family law focus', introducedBy:null, areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:-160, y:80,   vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n4', name:'Emma Blackwood', type:'prospect',     organisation:'Blackwood Family',  sector:'Real estate',     estimatedAUM:'>£50m',  engagementScore:4, referralLikelihood:3, notes:'', introducedBy:'n3', areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:-220, y:-50,  vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n5', name:'David Lim',      type:'client',       organisation:'Lim Group',         sector:'Tech founder',    estimatedAUM:'£10–25m',engagementScore:4, referralLikelihood:3, notes:'', introducedBy:null,  areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:220,  y:-50,  vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n6', name:'Claire Dubois',  type:'adviser',      organisation:'Montrose Tax',      sector:'Accounting',      estimatedAUM:'',       engagementScore:3, referralLikelihood:4, notes:'Tax adviser — good conduit', introducedBy:null, areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:0,    y:-180, vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n7', name:'Marcus Webb',    type:'prospect',     organisation:'Webb Industries',   sector:'Corporate',       estimatedAUM:'£10–25m',engagementScore:2, referralLikelihood:1, notes:'', introducedBy:null,  areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'', website:'', keyContacts:'', x:300,  y:60,   vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n8', name:'Alex Morgan',    type:'jpmorgan',     organisation:'JP Morgan',         sector:'',                estimatedAUM:'',       engagementScore:0, referralLikelihood:0, notes:'Covers HF clients in London', introducedBy:null, areaOfFocus:'Hedge Funds', firmsCovered:'Bridgewater, Man Group', jpmTitle:'Relationship Manager', jpmEngagement:'active', industry:'', website:'', keyContacts:'', x:-80,  y:-220, vx:0, vy:0, fx:0, fy:0, fixed:false },
+        { id:'n9', name:'Hartley Capital',type:'organisation',  organisation:'',                  sector:'',                estimatedAUM:'>£100m', engagementScore:0, referralLikelihood:0, notes:"James Hartley's firm", introducedBy:null, areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'', industry:'Asset Management', website:'hartleycapital.com', keyContacts:'James Hartley', x:130,  y:-180, vx:0, vy:0, fx:0, fy:0, fixed:false }
+    ],
+    edges: [
+        { id:'e1', sourceId:'n1', targetId:'n2', relationshipType:'referred',   strength:3, notes:'' },
+        { id:'e2', sourceId:'n3', targetId:'n4', relationshipType:'referred',   strength:3, notes:'' },
+        { id:'e3', sourceId:'n3', targetId:'n5', relationshipType:'referred',   strength:2, notes:'' },
+        { id:'e4', sourceId:'n1', targetId:'n3', relationshipType:'knows',      strength:2, notes:'' },
+        { id:'e5', sourceId:'n6', targetId:'n1', relationshipType:'adviser-to', strength:3, notes:'' },
+        { id:'e6', sourceId:'n6', targetId:'n4', relationshipType:'adviser-to', strength:2, notes:'' },
+        { id:'e7', sourceId:'n5', targetId:'n7', relationshipType:'knows',      strength:1, notes:'' },
+        { id:'e8', sourceId:'n8', targetId:'n1', relationshipType:'covers',     strength:2, notes:'JPM coverage' },
+        { id:'e9', sourceId:'n1', targetId:'n9', relationshipType:'colleague',  strength:3, notes:'' }
+    ]
+};
+
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random()*16|0, v = c==='x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+    });
+}
+
+function getInitials(name) { return name.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
+function getTypeColor(type) { return TYPE_COLORS[type]?.fill || '#999'; }
+
+function markDirty() {
+    appState.dirty = true;
+    clearTimeout(appState.autosaveTimer);
+    appState.autosaveTimer = setTimeout(persistToLocalStorage, 400);
+}
+
+function getTypeBreakdown() {
+    const b = { client:0, prospect:0, referrer:0, adviser:0, jpmorgan:0, organisation:0 };
+    for (const [,n] of appState.simulation.nodes) b[n.type] = (b[n.type]||0)+1;
+    return b;
+}
+
+// ============================================================================
+// LAYOUT PRESETS
+// ============================================================================
+
+function positionColumn(nodes, x, baseY, spacing) {
+    const total = nodes.length;
+    nodes.forEach((n, i) => { n.x = x + (Math.random()-0.5)*30; n.y = baseY + (i-(total-1)/2)*spacing; n.vx=0; n.vy=0; });
+}
+
+function positionCircular(nodes, cx, cy, radius) {
+    nodes.forEach((n, i) => {
+        const a = (i/Math.max(nodes.length,1))*Math.PI*2;
+        n.x = cx + Math.cos(a)*radius; n.y = cy + Math.sin(a)*radius; n.vx=0; n.vy=0;
+    });
+}
+
+function applyLayout(type) {
+    if (type === 'free') { restartSimulation(); return; }
+    const { nodes } = appState.simulation;
+    const bt = { client:[], prospect:[], referrer:[], adviser:[], jpmorgan:[], organisation:[] };
+    for (const [,n] of nodes) (bt[n.type]=bt[n.type]||[]).push(n);
+    const sp = 150;
+    if (type === 'by-type') {
+        ['organisation','referrer','client','adviser','prospect','jpmorgan'].forEach((t,i) => positionColumn(bt[t]||[], (i-2.5)*220, 0, sp));
+    } else if (type === 'clients-prospects') {
+        positionColumn(bt.referrer||[], -400, 0, sp);
+        positionColumn(bt.client||[], -200, 0, sp);
+        positionColumn(bt.adviser||[], 0, 0, sp);
+        positionColumn(bt.prospect||[], 200, 0, sp);
+        positionColumn(bt.jpmorgan||[], -400, -300, sp);
+        positionColumn(bt.organisation||[], 400, 0, sp);
+    } else if (type === 'referrers-hub') {
+        positionCircular(bt.referrer||[], 0, 0, 120);
+        positionCircular([...(bt.client||[]),...(bt.prospect||[]),...(bt.adviser||[]),...(bt.jpmorgan||[])], 0, 0, 320);
+        positionColumn(bt.organisation||[], 500, 0, sp);
+    } else if (type === 'jpmorgan-view') {
+        positionColumn(bt.jpmorgan||[], -400, 0, sp);
+        positionColumn(bt.organisation||[], -150, 0, sp);
+        positionColumn(bt.client||[], 100, 0, sp);
+        positionColumn(bt.referrer||[], 300, 0, sp);
+        positionColumn(bt.prospect||[], 500, 0, sp);
+        positionColumn(bt.adviser||[], 100, -300, sp);
+    }
+    appState.animationRunning = false;
+    render();
+}
+
+// ============================================================================
+// FORCE SIMULATION
+// ============================================================================
+
+function restartSimulation() {
+    appState.simulation.temperature = 1.0;
+    appState.simulation.tickCount = 0;
+    appState.animationRunning = true;
+}
+
+// Gentle restart - barely moves existing nodes, just settles the new one
+function gentleRestart() {
+    appState.simulation.temperature = 0.2;
+    appState.simulation.tickCount = 250;
+    appState.animationRunning = true;
+}
+
+function stepSimulation() {
+    const { nodes, edges } = appState.simulation;
+    for (const [,n] of nodes) { n.fx=0; n.fy=0; }
+
+    // Repulsion
+    for (const [id,n] of nodes) {
+        for (const [oid,o] of nodes) {
+            if (id===oid) continue;
+            const dx=n.x-o.x, dy=n.y-o.y, dSq=dx*dx+dy*dy+1, d=Math.sqrt(dSq);
+            if (d>500) continue;
+            const f = 8000/dSq;
+            n.fx += (dx/d)*f; n.fy += (dy/d)*f;
+        }
+    }
+
+    // Springs
+    for (const [,e] of edges) {
+        const s=nodes.get(e.sourceId), t=nodes.get(e.targetId);
+        if (!s||!t) continue;
+        const dx=t.x-s.x, dy=t.y-s.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+        const f=0.05*(d-150), fx=(dx/d)*f, fy=(dy/d)*f;
+        s.fx+=fx; s.fy+=fy; t.fx-=fx; t.fy-=fy;
+    }
+
+    // Gravity
+    for (const [,n] of nodes) { n.fx -= n.x*0.02; n.fy -= n.y*0.02; }
+
+    // Integrate
+    let maxVel=0;
+    for (const [,n] of nodes) {
+        if (n.fixed) continue;
+        n.vx=(n.vx+n.fx)*0.85; n.vy=(n.vy+n.fy)*0.85;
+        maxVel = Math.max(maxVel, Math.sqrt(n.vx*n.vx+n.vy*n.vy));
+        n.x+=n.vx; n.y+=n.vy;
+    }
+
+    appState.simulation.maxVelocity = maxVel;
+    appState.simulation.tickCount++;
+    if (appState.simulation.tickCount>300 || maxVel<0.3) appState.animationRunning=false;
+}
+
+// ============================================================================
+// SVG RENDERING
+// ============================================================================
+
+function render() {
+    const canvas = document.getElementById('canvas');
+    canvas.innerHTML = '';
+
+    const { nodes, edges } = appState.simulation;
+    const rect = canvas.getBoundingClientRect();
+    const W = rect.width||800, H = rect.height||600;
+    canvas.setAttribute('viewBox', `${-W/2} ${-H/2} ${W} ${H}`);
+
+    // Defs
+    const defs = document.createElementNS(SVG_NS, 'defs');
+    const mkr = document.createElementNS(SVG_NS, 'marker');
+    mkr.setAttribute('id','arrowhead'); mkr.setAttribute('markerWidth','10');
+    mkr.setAttribute('markerHeight','10'); mkr.setAttribute('refX','28');
+    mkr.setAttribute('refY','3'); mkr.setAttribute('orient','auto');
+    const poly = document.createElementNS(SVG_NS, 'polygon');
+    poly.setAttribute('points','0 0, 10 3, 0 6'); poly.setAttribute('fill','#185FA5');
+    mkr.appendChild(poly); defs.appendChild(mkr);
+
+    // Glow filter for selected edge
+    const filt = document.createElementNS(SVG_NS, 'filter');
+    filt.setAttribute('id','edgeGlow');
+    const feGauss = document.createElementNS(SVG_NS, 'feGaussianBlur');
+    feGauss.setAttribute('stdDeviation','3'); feGauss.setAttribute('result','blur');
+    const feMerge = document.createElementNS(SVG_NS, 'feMerge');
+    const feMN1 = document.createElementNS(SVG_NS, 'feMergeNode');
+    feMN1.setAttribute('in','blur');
+    const feMN2 = document.createElementNS(SVG_NS, 'feMergeNode');
+    feMN2.setAttribute('in','SourceGraphic');
+    feMerge.appendChild(feMN1); feMerge.appendChild(feMN2);
+    filt.appendChild(feGauss); filt.appendChild(feMerge);
+    defs.appendChild(filt);
+    canvas.appendChild(defs);
+
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('transform', `translate(${appState.panX},${appState.panY}) scale(${appState.zoomLevel})`);
+
+    // ── Edges ──
+    for (const [,edge] of edges) {
+        const src=nodes.get(edge.sourceId), tgt=nodes.get(edge.targetId);
+        if (!src||!tgt) continue;
+        const isSel = appState.selectedEdgeId === edge.id;
+
+        // Hit area (wide transparent line for easier clicking)
+        const hit = document.createElementNS(SVG_NS, 'line');
+        hit.setAttribute('x1',src.x); hit.setAttribute('y1',src.y);
+        hit.setAttribute('x2',tgt.x); hit.setAttribute('y2',tgt.y);
+        hit.setAttribute('stroke','transparent'); hit.setAttribute('stroke-width','14');
+        hit.setAttribute('data-edge-id',edge.id); hit.style.cursor='pointer';
+        g.appendChild(hit);
+
+        // Visible line
+        const line = document.createElementNS(SVG_NS, 'line');
+        line.setAttribute('x1',src.x); line.setAttribute('y1',src.y);
+        line.setAttribute('x2',tgt.x); line.setAttribute('y2',tgt.y);
+        line.setAttribute('data-edge-id',edge.id); line.style.cursor='pointer';
+
+        if (isSel) {
+            line.setAttribute('stroke','#f59e0b');
+            line.setAttribute('stroke-width', Math.max(3, 1.5*edge.strength+1));
+            line.setAttribute('filter','url(#edgeGlow)');
+        } else {
+            line.setAttribute('stroke-width', Math.max(1.5, 1.5*edge.strength));
+            switch(edge.relationshipType) {
+                case 'referred':   line.setAttribute('stroke','#185FA5'); line.setAttribute('marker-end','url(#arrowhead)'); break;
+                case 'knows':      line.setAttribute('stroke','#888780'); line.setAttribute('stroke-dasharray','6,4'); break;
+                case 'colleague':  line.setAttribute('stroke','#0F6E56'); break;
+                case 'adviser-to': line.setAttribute('stroke','#534AB7'); line.setAttribute('stroke-dasharray','2,4'); break;
+                case 'family':     line.setAttribute('stroke','#993C1D'); line.setAttribute('stroke-width',2); break;
+                case 'covers':     line.setAttribute('stroke','#003087'); line.setAttribute('stroke-dasharray','4,3'); break;
+                default:           line.setAttribute('stroke','#aaa');
+            }
+        }
+        line.setAttribute('class','edge');
+        g.appendChild(line);
+    }
+
+    // ── Nodes ──
+    for (const [id,node] of nodes) {
+        if (appState.filter !== 'all' && node.type !== appState.filter) continue;
+        const isSel = appState.selectedNodeId === id;
+        const isLinkSrc = appState.linkSourceNodeId === id;
+        const strokeColor = isLinkSrc ? '#f59e0b' : isSel ? '#FFD700' : '#ffffff';
+        const strokeWidth = (isSel||isLinkSrc) ? 3 : 2;
+
+        if (node.type === 'organisation') {
+            const lbl = node.name.length>22 ? node.name.substring(0,19)+'…' : node.name;
+            const w = Math.max(90, lbl.length*7+24), h=38;
+
+            const r = document.createElementNS(SVG_NS, 'rect');
+            r.setAttribute('x',node.x-w/2); r.setAttribute('y',node.y-h/2);
+            r.setAttribute('width',w); r.setAttribute('height',h);
+            r.setAttribute('rx',8); r.setAttribute('ry',8);
+            r.setAttribute('fill',getTypeColor(node.type));
+            r.setAttribute('stroke',strokeColor); r.setAttribute('stroke-width',strokeWidth);
+            r.setAttribute('class','node'); r.setAttribute('data-node-id',id);
+            g.appendChild(r);
+
+            const tx = document.createElementNS(SVG_NS, 'text');
+            tx.setAttribute('x',node.x); tx.setAttribute('y',node.y);
+            tx.setAttribute('text-anchor','middle'); tx.setAttribute('dy','0.35em');
+            tx.setAttribute('font-size','11'); tx.setAttribute('font-weight','bold');
+            tx.setAttribute('fill','#fff'); tx.setAttribute('pointer-events','none');
+            tx.textContent = lbl; g.appendChild(tx);
+
+            const sub = document.createElementNS(SVG_NS, 'text');
+            sub.setAttribute('x',node.x); sub.setAttribute('y',node.y+h/2+13);
+            sub.setAttribute('text-anchor','middle'); sub.setAttribute('font-size','10');
+            sub.setAttribute('fill','#888780'); sub.setAttribute('pointer-events','none');
+            sub.textContent = 'Organisation'; g.appendChild(sub);
+
+        } else {
+            const radius = 20 + (node.referralLikelihood*3);
+
+            const circle = document.createElementNS(SVG_NS, 'circle');
+            circle.setAttribute('cx',node.x); circle.setAttribute('cy',node.y);
+            circle.setAttribute('r',radius);
+            circle.setAttribute('fill',getTypeColor(node.type));
+            circle.setAttribute('stroke',strokeColor); circle.setAttribute('stroke-width',strokeWidth);
+            circle.setAttribute('class','node'); circle.setAttribute('data-node-id',id);
+            g.appendChild(circle);
+
+            if (node.type==='jpmorgan') {
+                const ring = document.createElementNS(SVG_NS,'circle');
+                ring.setAttribute('cx',node.x); ring.setAttribute('cy',node.y);
+                ring.setAttribute('r',radius+4); ring.setAttribute('fill','none');
+                ring.setAttribute('stroke','#6ea8de'); ring.setAttribute('stroke-width','1.5');
+                ring.setAttribute('stroke-dasharray','4,3'); ring.setAttribute('pointer-events','none');
+                g.appendChild(ring);
+            }
+
+            const initTx = document.createElementNS(SVG_NS,'text');
+            initTx.setAttribute('x',node.x); initTx.setAttribute('y',node.y);
+            initTx.setAttribute('text-anchor','middle'); initTx.setAttribute('dy','0.3em');
+            initTx.setAttribute('font-size','12'); initTx.setAttribute('font-weight','bold');
+            initTx.setAttribute('fill','#fff'); initTx.setAttribute('pointer-events','none');
+            initTx.textContent = getInitials(node.name).substring(0,2);
+            g.appendChild(initTx);
+
+            const nameLbl = document.createElementNS(SVG_NS,'text');
+            nameLbl.setAttribute('x',node.x); nameLbl.setAttribute('y',node.y+radius+16);
+            nameLbl.setAttribute('text-anchor','middle'); nameLbl.setAttribute('font-size','11');
+            nameLbl.setAttribute('fill','#333'); nameLbl.setAttribute('pointer-events','none');
+            nameLbl.textContent = node.name.length>16 ? node.name.substring(0,13)+'…' : node.name;
+            g.appendChild(nameLbl);
+
+            // Engagement dots
+            if (node.engagementScore > 0) {
+                const dotY = node.y+radius+30;
+                for (let i=0;i<5;i++) {
+                    const d=document.createElementNS(SVG_NS,'circle');
+                    d.setAttribute('cx',node.x-10+i*5); d.setAttribute('cy',dotY);
+                    d.setAttribute('r',2.5);
+                    d.setAttribute('fill',i<node.engagementScore?'#185FA5':'#e5e7eb');
+                    d.setAttribute('pointer-events','none'); g.appendChild(d);
+                }
+            }
+        }
+    }
+
+    canvas.appendChild(g);
+    document.getElementById('emptyState').style.display = nodes.size===0 ? 'block' : 'none';
+}
+
+// ============================================================================
+// UI UPDATES
+// ============================================================================
+
+function updatePeopleList() {
+    const list = document.getElementById('peopleList');
+    list.innerHTML = '';
+
+    for (const node of Array.from(appState.simulation.nodes.values()).sort((a,b)=>a.name.localeCompare(b.name))) {
+        const card = document.createElement('div');
+        card.className = 'person-card' + (appState.selectedNodeId===node.id ? ' selected' : '');
+        card.setAttribute('data-node-id', node.id);
+
+        const avatar = document.createElement('div');
+        avatar.className = 'person-avatar' + (node.type==='organisation'?' org-avatar':'');
+        avatar.style.backgroundColor = getTypeColor(node.type);
+        avatar.textContent = node.type==='organisation' ? '🏢' : getInitials(node.name);
+
+        const info = document.createElement('div');
+        info.className = 'person-info';
+        const nm = document.createElement('div'); nm.className='person-name'; nm.textContent=node.name;
+        const mt = document.createElement('div'); mt.className='person-meta';
+        mt.textContent = node.organisation || (node.type==='jpmorgan'&&node.areaOfFocus?node.areaOfFocus:node.type);
+        const badge = document.createElement('div'); badge.className='person-type type-'+node.type;
+        badge.textContent = node.type==='jpmorgan'?'JP Morgan':node.type==='organisation'?'Organisation':node.type.charAt(0).toUpperCase()+node.type.slice(1);
+        info.appendChild(nm); info.appendChild(mt); info.appendChild(badge);
+
+        const actions = document.createElement('div'); actions.className='person-actions';
+        const eb = document.createElement('button'); eb.className='action-btn'; eb.innerHTML='<i class="ti ti-edit"></i>'; eb.type='button';
+        eb.addEventListener('click', e=>{e.stopPropagation();selectNode(node.id);document.getElementById('editBtn').click();});
+        const db = document.createElement('button'); db.className='action-btn'; db.innerHTML='<i class="ti ti-trash"></i>'; db.type='button';
+        db.addEventListener('click', e=>{e.stopPropagation();if(confirm(`Delete ${node.name}?`))deleteNode(node.id);});
+        actions.appendChild(eb); actions.appendChild(db);
+
+        card.appendChild(avatar); card.appendChild(info); card.appendChild(actions);
+        card.addEventListener('click', ()=>selectNode(node.id));
+        list.appendChild(card);
+    }
+
+    const sel = document.getElementById('introducedBySelect');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">None</option>';
+    for (const n of Array.from(appState.simulation.nodes.values()).sort((a,b)=>a.name.localeCompare(b.name))) {
+        const o=document.createElement('option'); o.value=n.id; o.textContent=n.name; sel.appendChild(o);
+    }
+    sel.value = cur;
+}
+
+function updateInsights() {
+    const { nodes, edges } = appState.simulation;
+
+    let topRef=null, maxC=0;
+    for (const [,n] of nodes) {
+        const c = Array.from(edges.values()).filter(e=>e.sourceId===n.id&&e.relationshipType==='referred').length;
+        if (c>0&&c>maxC){maxC=c;topRef=n;}
+    }
+    document.getElementById('topReferrerValue').textContent = topRef ? `${topRef.name} (${maxC})` : 'None yet';
+
+    let warmest=null, maxS=0;
+    for (const [,n] of nodes) {
+        if (n.type==='prospect'){ const s=n.engagementScore+n.referralLikelihood; if(s>maxS){maxS=s;warmest=n;} }
+    }
+    document.getElementById('warmestProspectValue').textContent = warmest ? warmest.name : 'None yet';
+
+    const clientIds = new Set(Array.from(nodes.values()).filter(n=>n.type==='client').map(n=>n.id));
+    const connP = new Set();
+    for (const [,e] of edges) {
+        if (clientIds.has(e.sourceId)||clientIds.has(e.targetId)){ connP.add(e.sourceId); connP.add(e.targetId); }
+    }
+    const pCount = Array.from(nodes.values()).filter(n=>n.type==='prospect').length;
+    const gaps = pCount - Array.from(connP).filter(id=>nodes.get(id)?.type==='prospect').length;
+    document.getElementById('networkGapsValue').textContent = `${gaps} prospect${gaps!==1?'s':''} isolated`;
+}
+
+// ── NODE DETAIL ──
+function selectNode(nodeId) {
+    appState.selectedNodeId = nodeId;
+    appState.selectedEdgeId = null;
+    appState.detailMode = 'node';
+
+    const node = appState.simulation.nodes.get(nodeId);
+    if (!node) return;
+
+    document.getElementById('detailPlaceholder').style.display = 'none';
+    document.getElementById('detailPanel').classList.add('active');
+
+    // Restore standard action buttons
+    document.getElementById('detailActions').innerHTML =
+        '<button id="editBtn">Edit</button><button id="deleteBtn" class="delete">Delete</button>';
+    setupNodeActionListeners();
+
+    const avatar = document.getElementById('detailAvatar');
+    avatar.style.backgroundColor = getTypeColor(node.type);
+    avatar.textContent = node.type==='organisation' ? '🏢' : getInitials(node.name);
+    avatar.className = 'detail-avatar' + (node.type==='organisation'?' org':'');
+
+    document.getElementById('detailName').textContent = node.name;
+    document.getElementById('detailOrg').textContent = node.organisation||node.sector||'';
+    document.getElementById('detailTypeContainer').innerHTML =
+        `<div class="person-type type-${node.type}">${node.type==='jpmorgan'?'JP Morgan':node.type==='organisation'?'Organisation':node.type.charAt(0).toUpperCase()+node.type.slice(1)}</div>`;
+
+    let html = '';
+
+    if (node.type==='organisation') {
+        if (node.industry)     html += `<div class="detail-section-title">Industry</div><div class="detail-row">${node.industry}</div>`;
+        if (node.estimatedAUM) html += `<div class="detail-section-title">AUM / Size</div><div class="detail-row">${node.estimatedAUM}</div>`;
+        if (node.website)      html += `<div class="detail-section-title">Website</div><div class="detail-row">${node.website}</div>`;
+        if (node.keyContacts)  html += `<div class="detail-section-title">Key Contacts</div><div class="detail-row">${node.keyContacts}</div>`;
+    } else if (node.type==='jpmorgan') {
+        if (node.jpmTitle)      html += `<div class="detail-section-title">Role</div><div class="detail-row">${node.jpmTitle}</div>`;
+        if (node.areaOfFocus)   html += `<div class="detail-section-title">Area of Focus</div><div class="detail-row">${node.areaOfFocus}</div>`;
+        if (node.firmsCovered)  html += `<div class="detail-section-title">Firms Covered</div><div class="detail-row">${node.firmsCovered}</div>`;
+        if (node.jpmEngagement) html += `<div class="detail-section-title">Engagement</div><div class="detail-row">${node.jpmEngagement}</div>`;
+    } else {
+        html += '<div class="detail-section-title">Engagement</div><div class="detail-row"><div class="star-display">';
+        for (let i=0;i<5;i++) html += i<node.engagementScore?'<i class="ti ti-star-filled"></i>':'<i class="ti ti-star"></i>';
+        html += '</div></div>';
+        html += '<div class="detail-section-title">Referral Likelihood</div><div class="detail-row"><div class="star-display">';
+        for (let i=0;i<5;i++) html += i<node.referralLikelihood?'<i class="ti ti-star-filled"></i>':'<i class="ti ti-star"></i>';
+        html += '</div></div>';
+        if (node.estimatedAUM) html += `<div class="detail-section-title">AUM</div><div class="detail-row">${node.estimatedAUM}</div>`;
+    }
+
+    if (node.notes) html += `<div class="detail-section-title">Notes</div><div class="detail-row">${node.notes}</div>`;
+
+    const connEdges = Array.from(appState.simulation.edges.values()).filter(e=>e.sourceId===nodeId||e.targetId===nodeId);
+    if (connEdges.length>0) {
+        html += '<div class="detail-section-title">Connections</div>';
+        for (const e of connEdges) {
+            const oid = e.sourceId===nodeId?e.targetId:e.sourceId;
+            const o = appState.simulation.nodes.get(oid);
+            if (o) html += `<div class="detail-row"><strong>${o.name}</strong> — ${e.relationshipType}</div>`;
+        }
+    }
+
+    if (node.introducedBy) {
+        const intro = appState.simulation.nodes.get(node.introducedBy);
+        if (intro) html += `<div class="detail-section-title">Introduced By</div><div class="referral-pathway-item">${intro.name}</div>`;
+    }
+
+    const referrals = Array.from(appState.simulation.edges.values()).filter(e=>e.sourceId===nodeId&&e.relationshipType==='referred');
+    if (referrals.length>0) {
+        html += '<div class="detail-section-title">Has Referred</div>';
+        for (const e of referrals) {
+            const r=appState.simulation.nodes.get(e.targetId);
+            if (r) html += `<div class="referral-pathway-item">${r.name}</div>`;
+        }
+    }
+
+    document.getElementById('detailContent').innerHTML = html;
+    updatePeopleList();
+    render();
+}
+
+// ── EDGE DETAIL ──
+function selectEdge(edgeId) {
+    appState.selectedEdgeId = edgeId;
+    appState.selectedNodeId = null;
+    appState.detailMode = 'edge';
+
+    const edge = appState.simulation.edges.get(edgeId);
+    if (!edge) return;
+
+    const src = appState.simulation.nodes.get(edge.sourceId);
+    const tgt = appState.simulation.nodes.get(edge.targetId);
+
+    document.getElementById('detailPlaceholder').style.display = 'none';
+    document.getElementById('detailPanel').classList.add('active');
+
+    // Hide the generic action buttons — the edit form has its own Save/Delete
+    document.getElementById('detailActions').innerHTML = '';
+
+    const avatar = document.getElementById('detailAvatar');
+    avatar.style.backgroundColor = '#888780';
+    avatar.textContent = '⟷';
+    avatar.className = 'detail-avatar edge';
+
+    document.getElementById('detailName').textContent = `${src?.name||'?'} → ${tgt?.name||'?'}`;
+    document.getElementById('detailOrg').textContent = 'Connection';
+    document.getElementById('detailTypeContainer').innerHTML = `<span class="edge-badge">${edge.relationshipType}</span>`;
+
+    // Show edit form immediately on click — no read-only step
+    const relTypes = ['referred','knows','colleague','adviser-to','family','covers'];
+    const relOpts = relTypes.map(t => `<option value="${t}" ${edge.relationshipType===t?'selected':''}>${t}</option>`).join('');
+
+    document.getElementById('detailContent').innerHTML = `
+        <div class="edit-mode">
+            <div class="form-group" style="margin-top:8px;">
+                <label>Relationship type</label>
+                <select id="eeType">${relOpts}</select>
+            </div>
+            <div class="form-group">
+                <label>Strength</label>
+                <select id="eeStrength">
+                    <option value="1" ${edge.strength===1?'selected':''}>1 – Distant</option>
+                    <option value="2" ${edge.strength===2?'selected':''}>2 – Solid</option>
+                    <option value="3" ${edge.strength===3?'selected':''}>3 – Close</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="eeNotes">${edge.notes||''}</textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+                <button id="saveEdgeBtn" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:1px solid #185fa5;border-radius:6px;cursor:pointer;background:#185fa5;color:white;">Save</button>
+                <button id="deleteEdgeBtn" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;background:#fee2e2;color:#991b1b;">Delete</button>
+            </div>
+        </div>`;
+
+    document.getElementById('saveEdgeBtn').addEventListener('click', () => {
+        edge.relationshipType = document.getElementById('eeType').value;
+        edge.strength = parseInt(document.getElementById('eeStrength').value);
+        edge.notes = document.getElementById('eeNotes').value;
+        markDirty();
+        selectEdge(edgeId);
+    });
+
+    document.getElementById('deleteEdgeBtn').addEventListener('click', () => {
+        if (confirm('Delete this connection?')) deleteEdge(edgeId);
+    });
+
+    updatePeopleList();
+    render();
+}
+
+function editEdge(edgeId) {
+    const edge = appState.simulation.edges.get(edgeId);
+    if (!edge) return;
+    const src = appState.simulation.nodes.get(edge.sourceId);
+    const tgt = appState.simulation.nodes.get(edge.targetId);
+
+    const relTypes = ['referred','knows','colleague','adviser-to','family','covers'];
+    const relOpts = relTypes.map(t=>`<option value="${t}" ${edge.relationshipType===t?'selected':''}>${t}</option>`).join('');
+
+    document.getElementById('detailContent').innerHTML = `
+        <div class="edit-mode">
+            <p style="font-size:13px;font-weight:600;margin-bottom:12px;">${src?.name||'?'} → ${tgt?.name||'?'}</p>
+            <div class="form-group"><label>Relationship type</label>
+                <select id="eeType">${relOpts}</select></div>
+            <div class="form-group"><label>Strength</label>
+                <select id="eeStrength">
+                    <option value="1" ${edge.strength===1?'selected':''}>1 – Distant</option>
+                    <option value="2" ${edge.strength===2?'selected':''}>2 – Solid</option>
+                    <option value="3" ${edge.strength===3?'selected':''}>3 – Close</option>
+                </select></div>
+            <div class="form-group"><label>Notes</label>
+                <textarea id="eeNotes">${edge.notes||''}</textarea></div>
+            <div class="detail-actions">
+                <button id="saveEdgeBtn" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:1px solid #185fa5;border-radius:6px;cursor:pointer;background:#185fa5;color:white;">Save</button>
+                <button id="cancelEdgeBtn" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;background:#f3f4f6;">Cancel</button>
+            </div>
+        </div>`;
+
+    document.getElementById('saveEdgeBtn').addEventListener('click', ()=>{
+        edge.relationshipType = document.getElementById('eeType').value;
+        edge.strength = parseInt(document.getElementById('eeStrength').value);
+        edge.notes = document.getElementById('eeNotes').value;
+        markDirty();
+        selectEdge(edgeId);  // re-show without bouncing
+    });
+
+    document.getElementById('cancelEdgeBtn').addEventListener('click', ()=>selectEdge(edgeId));
+}
+
+function deleteEdge(edgeId) {
+    appState.simulation.edges.delete(edgeId);
+    appState.selectedEdgeId = null;
+    appState.detailMode = null;
+    document.getElementById('detailPanel').classList.remove('active');
+    document.getElementById('detailPlaceholder').style.display = 'block';
+    markDirty(); updateInsights(); render();
+}
+
+function deleteNode(nodeId) {
+    appState.simulation.nodes.delete(nodeId);
+    for (const [id,e] of appState.simulation.edges)
+        if (e.sourceId===nodeId||e.targetId===nodeId) appState.simulation.edges.delete(id);
+    appState.selectedNodeId = null;
+    appState.detailMode = null;
+    document.getElementById('detailPanel').classList.remove('active');
+    document.getElementById('detailPlaceholder').style.display = 'block';
+    markDirty(); updatePeopleList(); updateInsights(); render();
+}
+
+// Attach edit/delete listeners (called after detailActions innerHTML is rebuilt)
+function setupNodeActionListeners() {
+    document.getElementById('editBtn').addEventListener('click', ()=>{
+        if (appState.detailMode==='edge') editEdge(appState.selectedEdgeId);
+        else editNode(appState.selectedNodeId);
+    });
+    document.getElementById('deleteBtn').addEventListener('click', ()=>{
+        if (appState.detailMode==='edge') {
+            if (confirm('Delete this connection?')) deleteEdge(appState.selectedEdgeId);
+        } else {
+            const n = appState.simulation.nodes.get(appState.selectedNodeId);
+            if (n && confirm(`Delete ${n.name}?`)) deleteNode(appState.selectedNodeId);
+        }
+    });
+}
+
+function editNode(nodeId) {
+    const node = appState.simulation.nodes.get(nodeId);
+    if (!node) return;
+
+    const extraFields = node.type==='jpmorgan' ? `
+        <div class="form-group"><label>Role / Title</label><input type="text" id="ejJpmTitle" value="${node.jpmTitle||''}"></div>
+        <div class="form-group"><label>Area of Focus</label>
+            <select id="ejFocus">${['','Hedge Funds','Private Equity','Insurance','Family Office','Real Estate','Banking','Technology','Corporate','Other']
+                .map(v=>`<option value="${v}" ${node.areaOfFocus===v?'selected':''}>${v||'Select...'}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Firms Covered</label><textarea id="ejFirms">${node.firmsCovered||''}</textarea></div>
+        <div class="form-group"><label>Engagement</label>
+            <select id="ejEng">${['warm','active','cold','prospect'].map(v=>`<option value="${v}" ${node.jpmEngagement===v?'selected':''}>${v}</option>`).join('')}</select></div>
+    ` : node.type==='organisation' ? `
+        <div class="form-group"><label>Industry</label><input type="text" id="ejIndustry" value="${node.industry||''}"></div>
+        <div class="form-group"><label>AUM / Size</label><input type="text" id="ejAUM" value="${node.estimatedAUM||''}"></div>
+        <div class="form-group"><label>Website</label><input type="text" id="ejWebsite" value="${node.website||''}"></div>
+        <div class="form-group"><label>Key Contacts</label><textarea id="ejKeyContacts">${node.keyContacts||''}</textarea></div>
+    ` : `
+        <div class="form-group"><label>Sector</label><input type="text" id="ejSector" value="${node.sector||''}"></div>
+        <div class="form-group"><label>AUM</label><input type="text" id="ejAUM" value="${node.estimatedAUM||''}"></div>
+    `;
+
+    document.getElementById('detailContent').innerHTML = `
+        <div class="edit-mode">
+            <div class="form-group"><label>Name</label><input type="text" id="ejName" value="${node.name}"></div>
+            <div class="form-group"><label>Organisation</label><input type="text" id="ejOrg" value="${node.organisation||''}"></div>
+            ${extraFields}
+            <div class="form-group"><label>Notes</label><textarea id="ejNotes">${node.notes||''}</textarea></div>
+            <div class="detail-actions">
+                <button id="saveNodeBtn" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:1px solid #185fa5;border-radius:6px;cursor:pointer;background:#185fa5;color:white;">Save</button>
+                <button id="cancelNodeBtn" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;background:#f3f4f6;">Cancel</button>
+            </div>
+        </div>`;
+
+    document.getElementById('saveNodeBtn').addEventListener('click', ()=>{
+        node.name         = document.getElementById('ejName').value;
+        node.organisation = document.getElementById('ejOrg').value;
+        node.notes        = document.getElementById('ejNotes').value;
+        if (node.type==='jpmorgan') {
+            node.jpmTitle     = document.getElementById('ejJpmTitle').value;
+            node.areaOfFocus  = document.getElementById('ejFocus').value;
+            node.firmsCovered = document.getElementById('ejFirms').value;
+            node.jpmEngagement= document.getElementById('ejEng').value;
+            checkJPMorganCoverage(node);
+        } else if (node.type==='organisation') {
+            node.industry    = document.getElementById('ejIndustry').value;
+            node.estimatedAUM= document.getElementById('ejAUM').value;
+            node.website     = document.getElementById('ejWebsite').value;
+            node.keyContacts = document.getElementById('ejKeyContacts').value;
+        } else {
+            node.sector       = document.getElementById('ejSector').value;
+            node.estimatedAUM = document.getElementById('ejAUM').value;
+        }
+        markDirty();
+        selectNode(nodeId);     // refresh view without bouncing
+        updatePeopleList();
+    });
+
+    document.getElementById('cancelNodeBtn').addEventListener('click', ()=>selectNode(nodeId));
+}
+
+// ============================================================================
+// JP MORGAN COVERAGE CHECK
+// ============================================================================
+
+function checkJPMorganCoverage(jpmNode) {
+    if (!jpmNode.firmsCovered) return;
+    const covered = jpmNode.firmsCovered.split(/[,\n;]/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+    const matches = [];
+
+    for (const [,n] of appState.simulation.nodes) {
+        if (n.id===jpmNode.id) continue;
+        const nName = n.name.toLowerCase();
+        const nOrg  = (n.organisation||'').toLowerCase();
+        if (covered.some(c => nName.includes(c) || (c.length>3 && nName.includes(c)) ||
+                               nOrg.includes(c)  || (c.length>3 && nOrg.includes(c)))) {
+            // Check no edge already exists
+            const alreadyConnected = Array.from(appState.simulation.edges.values())
+                .some(e=>(e.sourceId===jpmNode.id&&e.targetId===n.id)||(e.sourceId===n.id&&e.targetId===jpmNode.id));
+            if (!alreadyConnected) matches.push(n);
+        }
+    }
+
+    if (matches.length>0) {
+        const names = matches.map(n=>n.name).join(', ');
+        if (confirm(`Coverage matches existing nodes: ${names}.\n\nCreate "covers" connections?`)) {
+            for (const m of matches) {
+                const edge = { id:generateUUID(), sourceId:jpmNode.id, targetId:m.id, relationshipType:'covers', strength:2, notes:'JP Morgan coverage' };
+                appState.simulation.edges.set(edge.id, edge);
+            }
+            markDirty(); render(); updateInsights();
+        }
+    }
+}
+
+// ============================================================================
+// ORG DUPLICATE CHECK
+// ============================================================================
+
+function findExistingOrg(name) {
+    const lc = name.trim().toLowerCase();
+    for (const [,n] of appState.simulation.nodes) {
+        if (n.type==='organisation' && n.name.toLowerCase()===lc) return n;
+    }
+    return null;
+}
+
+// ============================================================================
+// PERSISTENCE
+// ============================================================================
+
+function persistToLocalStorage() {
+    try {
+        const data = { nodes:Array.from(appState.simulation.nodes.values()), edges:Array.from(appState.simulation.edges.values()), timestamp:new Date().toISOString() };
+        localStorage.setItem('referralNetworkState', JSON.stringify(data));
+        document.getElementById('saveIndicator').textContent = 'Saved just now';
+    } catch(e) { document.getElementById('saveIndicator').textContent = 'Error saving'; }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const raw = localStorage.getItem('referralNetworkState');
+        if (!raw) { initializeWithSampleData(); return; }
+        const { nodes, edges } = JSON.parse(raw);
+        appState.simulation.nodes = new Map(nodes.map(n=>[n.id,{
+            areaOfFocus:'',firmsCovered:'',jpmTitle:'',jpmEngagement:'',industry:'',website:'',keyContacts:'',...n
+        }]));
+        appState.simulation.edges = new Map(edges.map(e=>[e.id,e]));
+    } catch(e) { initializeWithSampleData(); }
+}
+
+function initializeWithSampleData() {
+    appState.simulation.nodes = new Map(SAMPLE_DATA.nodes.map(n=>[n.id,n]));
+    appState.simulation.edges = new Map(SAMPLE_DATA.edges.map(e=>[e.id,e]));
+    markDirty();
+}
+
+function clearAllData() {
+    if (!confirm('Delete all data?')) return;
+    appState.simulation.nodes.clear(); appState.simulation.edges.clear();
+    appState.selectedNodeId=null; appState.selectedEdgeId=null; appState.detailMode=null;
+    document.getElementById('detailPanel').classList.remove('active');
+    document.getElementById('detailPlaceholder').style.display='block';
+    markDirty(); updatePeopleList(); updateInsights(); render();
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+function exportAsJSON() {
+    const data = { exportedAt:new Date().toISOString(), nodes:Array.from(appState.simulation.nodes.values()), edges:Array.from(appState.simulation.edges.values()), stats:{ nodeCount:appState.simulation.nodes.size, edgeCount:appState.simulation.edges.size, typeBreakdown:getTypeBreakdown() } };
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=`referral-network-${new Date().toISOString().split('T')[0]}.json`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportAsSummary() {
+    const { nodes, edges } = appState.simulation;
+    const b = getTypeBreakdown();
+    let s = `REFERRAL NETWORK SUMMARY\nGenerated: ${new Date().toLocaleString()}\n\nOVERVIEW\nTotal Contacts: ${nodes.size}\nTotal Relationships: ${edges.size}\n\n`;
+    s += `BREAKDOWN\nClients: ${b.client} | Prospects: ${b.prospect} | Referrers: ${b.referrer} | Advisers: ${b.adviser} | JP Morgan: ${b.jpmorgan} | Organisations: ${b.organisation}\n\n`;
+    s += 'TOP REFERRERS\n';
+    const rc=new Map();
+    for (const [,e] of edges) if (e.relationshipType==='referred') rc.set(e.sourceId,(rc.get(e.sourceId)||0)+1);
+    Array.from(rc.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([id,c])=>{const n=nodes.get(id);if(n)s+=`${n.name} (${c})\n`;});
+    const jpm=Array.from(nodes.values()).filter(n=>n.type==='jpmorgan');
+    if (jpm.length) { s+='\nJP MORGAN CONTACTS\n'; jpm.forEach(n=>{ s+=`${n.name}${n.jpmTitle?' – '+n.jpmTitle:''}`; if(n.areaOfFocus) s+=` | ${n.areaOfFocus}`; if(n.firmsCovered) s+=` | Firms: ${n.firmsCovered}`; s+='\n'; }); }
+    navigator.clipboard.writeText(s).then(()=>alert('Summary copied')).catch(()=>{});
+}
+
+// ============================================================================
+// CONTEXT MENU
+// ============================================================================
+
+let contextMenuNodeId=null;
+
+function showContextMenu(e, nodeId) {
+    e.preventDefault(); contextMenuNodeId=nodeId;
+    const m=document.getElementById('contextMenu');
+    m.style.display='block'; m.style.left=e.clientX+'px'; m.style.top=e.clientY+'px';
+}
+
+function hideContextMenu() { document.getElementById('contextMenu').style.display='none'; contextMenuNodeId=null; }
+
+// ============================================================================
+// LINK MODE
+// ============================================================================
+
+function setLinkMode(active) {
+    appState.linkMode = active;
+    if (!active) appState.linkSourceNodeId=null;
+    const btn = document.getElementById('linkNodesBtn');
+    const cc  = document.getElementById('canvas-container');
+    const tip = document.getElementById('linkTip');
+    if (active) { btn.classList.add('link-active'); cc.classList.add('link-mode'); tip.classList.add('visible'); }
+    else { btn.classList.remove('link-active'); cc.classList.remove('link-mode'); tip.classList.remove('visible'); tip.textContent='Click the first node, then the second to connect them'; }
+    render();
+}
+
+// ============================================================================
+// EVENT HANDLERS
+// ============================================================================
+
+let populateConnectionModal;
+
+function setupEventHandlers() {
+    // Scroll buttons
+    document.getElementById('scrollFormUp').addEventListener('click',()=>document.getElementById('formContainer').scrollBy({top:-100,behavior:'smooth'}));
+    document.getElementById('scrollFormDown').addEventListener('click',()=>document.getElementById('formContainer').scrollBy({top:100,behavior:'smooth'}));
+
+    // Type select → show/hide fields
+    document.getElementById('typeSelect').addEventListener('change', e=>{
+        const t = e.target.value;
+        document.getElementById('jpmorganFields').classList.toggle('visible', t==='jpmorgan');
+        document.getElementById('orgFields').classList.toggle('visible', t==='organisation');
+        document.getElementById('commonFields').classList.toggle('hidden', t==='jpmorgan'||t==='organisation');
+    });
+
+    // Star pickers
+    function setupStarPicker(pickerId, inputName) {
+        const picker=document.getElementById(pickerId);
+        const input=document.querySelector(`input[name="${inputName}"]`);
+        picker.querySelectorAll('button').forEach(btn=>{
+            btn.addEventListener('click', e=>{ e.preventDefault(); input.value=btn.dataset.value; updateStarBtns(picker.querySelectorAll('button'),btn.dataset.value); });
+        });
+    }
+    function updateStarBtns(btns, val) {
+        btns.forEach((b,i)=>{ const on=i<parseInt(val); b.classList.toggle('active',on); b.innerHTML=on?'<i class="ti ti-star-filled"></i>':'<i class="ti ti-star"></i>'; });
+    }
+    function updateStarPickers() {
+        updateStarBtns(document.querySelectorAll('#engagementPicker button'), document.querySelector('input[name="engagementScore"]').value);
+        updateStarBtns(document.querySelectorAll('#referralPicker button'), document.querySelector('input[name="referralLikelihood"]').value);
+    }
+    window.updateStarPickers = updateStarPickers;
+    setupStarPicker('engagementPicker','engagementScore');
+    setupStarPicker('referralPicker','referralLikelihood');
+    updateStarPickers();
+
+    // ── Form submit ──
+    document.getElementById('addPersonForm').addEventListener('submit', e=>{
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const type = fd.get('type');
+        const name = fd.get('name');
+
+        // Org duplicate check
+        if (type==='organisation') {
+            const existing = findExistingOrg(name);
+            if (existing) {
+                appState.pendingOrgNode = {
+                    id:generateUUID(), name, type, organisation:'', sector:'',
+                    estimatedAUM:fd.get('estimatedAUM')||'',
+                    engagementScore:0, referralLikelihood:0,
+                    notes:fd.get('notes')||'',
+                    introducedBy:fd.get('introducedBy')||null,
+                    areaOfFocus:'', firmsCovered:'', jpmTitle:'', jpmEngagement:'',
+                    industry:fd.get('industry')||'', website:fd.get('website')||'',
+                    keyContacts:fd.get('keyContacts')||'',
+                    x:Math.random()*200-100, y:Math.random()*200-100,
+                    vx:0,vy:0,fx:0,fy:0,fixed:false
+                };
+                document.getElementById('orgDuplicateMsg').textContent =
+                    `"${existing.name}" already exists in your network. What is the connection between this new entry and the existing one?`;
+                document.getElementById('orgDuplicateModal').classList.add('active');
+                document.getElementById('orgDuplicateForm').onsubmit = ev => {
+                    ev.preventDefault();
+                    const newNode = appState.pendingOrgNode;
+                    appState.simulation.nodes.set(newNode.id, newNode);
+                    const edge = { id:generateUUID(), sourceId:existing.id, targetId:newNode.id,
+                        relationshipType:document.getElementById('orgDupRelType').value,
+                        strength:parseInt(document.getElementById('orgDupStrength').value), notes:'' };
+                    appState.simulation.edges.set(edge.id, edge);
+                    finishAddNode(); document.getElementById('orgDuplicateModal').classList.remove('active');
+                };
+                document.getElementById('orgDupSkipBtn').onclick = ()=>{
+                    appState.simulation.nodes.set(appState.pendingOrgNode.id, appState.pendingOrgNode);
+                    finishAddNode(); document.getElementById('orgDuplicateModal').classList.remove('active');
+                };
+                return;
+            }
+        }
+
+        const person = {
+            id:generateUUID(), name, type,
+            organisation:fd.get('organisation')||'',
+            sector:fd.get('sector')||'',
+            estimatedAUM:fd.get('estimatedAUM')||'',
+            engagementScore:parseInt(fd.get('engagementScore'))||3,
+            referralLikelihood:parseInt(fd.get('referralLikelihood'))||3,
+            notes:fd.get('notes')||'',
+            introducedBy:fd.get('introducedBy')||null,
+            areaOfFocus:fd.get('areaOfFocus')||'',
+            firmsCovered:fd.get('firmsCovered')||'',
+            jpmTitle:fd.get('jpmTitle')||'',
+            jpmEngagement:fd.get('jpmEngagement')||'',
+            industry:fd.get('industry')||'',
+            website:fd.get('website')||'',
+            keyContacts:fd.get('keyContacts')||'',
+            x:Math.random()*200-100, y:Math.random()*200-100,
+            vx:0,vy:0,fx:0,fy:0,fixed:false
+        };
+
+        // For org type, set AUM from org-specific field
+        if (type==='organisation') person.estimatedAUM = fd.get('estimatedAUM')||'';
+
+        appState.simulation.nodes.set(person.id, person);
+
+        if (type==='jpmorgan') checkJPMorganCoverage(person);
+
+        // Check if organisation field matches existing org node
+        if (person.organisation && type!=='organisation') {
+            const matchedOrg = findExistingOrg(person.organisation);
+            if (matchedOrg) {
+                const alreadyLinked = Array.from(appState.simulation.edges.values())
+                    .some(e=>(e.sourceId===person.id&&e.targetId===matchedOrg.id)||(e.sourceId===matchedOrg.id&&e.targetId===person.id));
+                if (!alreadyLinked && confirm(`"${matchedOrg.name}" exists as an organisation in your network. Connect ${person.name} to it?`)) {
+                    const edge = { id:generateUUID(), sourceId:person.id, targetId:matchedOrg.id, relationshipType:'colleague', strength:2, notes:'Works at / associated with' };
+                    appState.simulation.edges.set(edge.id, edge);
+                }
+            }
+        }
+
+        finishAddNode();
+    });
+
+    function finishAddNode() {
+        document.getElementById('addPersonForm').reset();
+        document.getElementById('jpmorganFields').classList.remove('visible');
+        document.getElementById('orgFields').classList.remove('visible');
+        document.getElementById('commonFields').classList.remove('hidden');
+        document.querySelector('input[name="engagementScore"]').value='3';
+        document.querySelector('input[name="referralLikelihood"]').value='3';
+        updateStarPickers();
+        markDirty(); updatePeopleList(); updateInsights();
+    }
+
+    // ── Canvas ──
+    const canvas = document.getElementById('canvas');
+
+    canvas.addEventListener('mousedown', e=>{
+        const nodeId = e.target.getAttribute('data-node-id');
+        if (nodeId && !appState.linkMode) {
+            appState.draggingNodeId = nodeId;
+            appState.simulation.nodes.get(nodeId).fixed = true;
+        }
+    });
+
+    document.addEventListener('mousemove', e=>{
+        if (!appState.draggingNodeId) return;
+        const node = appState.simulation.nodes.get(appState.draggingNodeId);
+        const r = canvas.getBoundingClientRect();
+        node.x = (e.clientX-r.left-r.width/2)/appState.zoomLevel - appState.panX;
+        node.y = (e.clientY-r.top -r.height/2)/appState.zoomLevel - appState.panY;
+        node.vx=0; node.vy=0;
+    });
+
+    document.addEventListener('mouseup', ()=>{
+        if (appState.draggingNodeId) {
+            appState.simulation.nodes.get(appState.draggingNodeId).fixed=false;
+            appState.draggingNodeId=null; markDirty();
+        }
+    });
+
+    canvas.addEventListener('click', e=>{
+        const nodeId = e.target.getAttribute('data-node-id');
+        const edgeId = e.target.getAttribute('data-edge-id');
+        hideContextMenu();
+
+        // Link mode
+        if (appState.linkMode) {
+            if (!nodeId) return;
+            if (!appState.linkSourceNodeId) {
+                appState.linkSourceNodeId=nodeId;
+                const nm=appState.simulation.nodes.get(nodeId)?.name||'';
+                document.getElementById('linkTip').textContent=`Source: ${nm}. Now click target node.`;
+                render();
+            } else if (appState.linkSourceNodeId!==nodeId) {
+                appState.selectedNodeId=appState.linkSourceNodeId;
+                populateConnectionModal();
+                document.getElementById('sourceNodeId').value=appState.linkSourceNodeId;
+                document.getElementById('targetNodeId').value=nodeId;
+                document.getElementById('connectionModal').classList.add('active');
+                setLinkMode(false);
+            }
+            return;
+        }
+
+        if (nodeId) {
+            selectNode(nodeId);
+        } else if (edgeId) {
+            selectEdge(edgeId);
+        } else {
+            // Deselect
+            appState.selectedNodeId=null; appState.selectedEdgeId=null; appState.detailMode=null;
+            document.getElementById('detailPanel').classList.remove('active');
+            document.getElementById('detailPlaceholder').style.display='block';
+            updatePeopleList(); render();
+        }
+    });
+
+    canvas.addEventListener('contextmenu', e=>{
+        const nodeId=e.target.getAttribute('data-node-id');
+        if (nodeId) showContextMenu(e,nodeId); else e.preventDefault();
+    });
+
+    canvas.addEventListener('wheel', e=>{
+        e.preventDefault();
+        appState.zoomLevel=Math.max(0.3,Math.min(4,appState.zoomLevel+(e.deltaY<0?1:-1)*0.1));
+    });
+
+    // Filter pills
+    document.querySelectorAll('.filter-pill').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active'); appState.filter=btn.dataset.filter; render();
+        });
+    });
+
+    // Layout
+    document.getElementById('layoutSelect').addEventListener('change',e=>applyLayout(e.target.value));
+
+    // Link nodes button
+    document.getElementById('linkNodesBtn').addEventListener('click',()=>setLinkMode(!appState.linkMode));
+
+    // Escape cancels link mode
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&appState.linkMode) setLinkMode(false); });
+
+    // Add connection button
+    populateConnectionModal = function(srcId) {
+        const srcSel=document.getElementById('sourceNodeId');
+        const tgtSel=document.getElementById('targetNodeId');
+        const nodes=Array.from(appState.simulation.nodes.values()).sort((a,b)=>a.name.localeCompare(b.name));
+        srcSel.innerHTML='<option value="">Select person / org</option>';
+        tgtSel.innerHTML='<option value="">Select person / org</option>';
+        for (const n of nodes) {
+            const o1=document.createElement('option'); o1.value=n.id; o1.textContent=n.name; srcSel.appendChild(o1);
+            const o2=document.createElement('option'); o2.value=n.id; o2.textContent=n.name; tgtSel.appendChild(o2);
+        }
+        srcSel.value = srcId || appState.selectedNodeId || '';
+        updateTargetSelect();
+    };
+
+    function updateTargetSelect() {
+        const srcId=document.getElementById('sourceNodeId').value;
+        document.getElementById('targetNodeId').querySelectorAll('option').forEach(o=>{o.style.display=o.value===srcId?'none':'';});
+    }
+
+    document.getElementById('addConnectionBtn').addEventListener('click',()=>{ populateConnectionModal(); document.getElementById('connectionModal').classList.add('active'); });
+    document.getElementById('sourceNodeId').addEventListener('change',updateTargetSelect);
+
+    document.getElementById('relationshipType').addEventListener('change',e=>{
+        const note=document.getElementById('directionNote');
+        if (e.target.value==='referred') {
+            const sn=document.querySelector(`#sourceNodeId option[value="${document.getElementById('sourceNodeId').value}"]`)?.textContent||'';
+            const tn=document.querySelector(`#targetNodeId option[value="${document.getElementById('targetNodeId').value}"]`)?.textContent||'';
+            note.textContent=`Direction: ${sn} referred ${tn}`;
+        } else note.textContent='';
+    });
+
+    document.getElementById('connectionForm').addEventListener('submit',e=>{
+        e.preventDefault();
+        const srcId=document.getElementById('sourceNodeId').value;
+        const tgtId=document.getElementById('targetNodeId').value;
+        const rel=document.getElementById('relationshipType').value;
+        const str=parseInt(document.getElementById('strength').value);
+        const notes=document.getElementById('connectionNotes').value;
+        if (!srcId||!tgtId||!rel||!str){alert('All fields required');return;}
+        const edge={id:generateUUID(),sourceId:srcId,targetId:tgtId,relationshipType:rel,strength:str,notes};
+        appState.simulation.edges.set(edge.id,edge);
+        markDirty();
+        document.getElementById('connectionModal').classList.remove('active');
+        e.target.reset(); updateInsights(); render();  // no restart — map stays put
+    });
+
+    document.getElementById('cancelModalBtn').addEventListener('click',()=>document.getElementById('connectionModal').classList.remove('active'));
+
+    // Toolbar
+    document.getElementById('fitToScreenBtn').addEventListener('click',()=>{
+        const { nodes }=appState.simulation; if (nodes.size===0) return;
+        let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+        for (const [,n] of nodes){minX=Math.min(minX,n.x);maxX=Math.max(maxX,n.x);minY=Math.min(minY,n.y);maxY=Math.max(maxY,n.y);}
+        const cr=canvas.getBoundingClientRect(), pad=120;
+        appState.zoomLevel=Math.min(cr.width/(maxX-minX+pad),cr.height/(maxY-minY+pad),2);
+        appState.panX=-((minX+maxX)/2)*appState.zoomLevel;
+        appState.panY=-((minY+maxY)/2)*appState.zoomLevel;
+    });
+
+    // Exports
+    document.getElementById('exportJsonBtn').addEventListener('click',exportAsJSON);
+    document.getElementById('exportSummaryBtn').addEventListener('click',exportAsSummary);
+    document.getElementById('clearDataBtn').addEventListener('click',clearAllData);
+
+    // Context menu
+    document.getElementById('contextEdit').addEventListener('click',()=>{ if(contextMenuNodeId){selectNode(contextMenuNodeId);document.getElementById('editBtn').click();} hideContextMenu(); });
+    document.getElementById('contextDelete').addEventListener('click',()=>{ if(contextMenuNodeId){const n=appState.simulation.nodes.get(contextMenuNodeId);if(n&&confirm(`Delete ${n.name}?`))deleteNode(contextMenuNodeId);} hideContextMenu(); });
+    document.getElementById('contextAddConnection').addEventListener('click',()=>{ if(contextMenuNodeId){populateConnectionModal(contextMenuNodeId);document.getElementById('connectionModal').classList.add('active');} hideContextMenu(); });
+    document.getElementById('contextLinkNodes').addEventListener('click',()=>{
+        if(contextMenuNodeId){
+            appState.linkSourceNodeId=contextMenuNodeId;
+            setLinkMode(true);
+            const nm=appState.simulation.nodes.get(contextMenuNodeId)?.name||'';
+            document.getElementById('linkTip').textContent=`Source: ${nm}. Now click target node.`;
+            render();
+        }
+        hideContextMenu();
+    });
+    document.getElementById('contextViewConnections').addEventListener('click',()=>{ if(contextMenuNodeId)selectNode(contextMenuNodeId); hideContextMenu(); });
+    document.addEventListener('click',hideContextMenu);
+
+    // Legend toggle
+    document.getElementById('legendToggleBtn').addEventListener('click',()=>{
+        const b=document.getElementById('legendBody');
+        b.classList.toggle('collapsed');
+        document.getElementById('legendToggleBtn').textContent=b.classList.contains('collapsed')?'+':'−';
+    });
+}
+
+// ============================================================================
+// ANIMATION LOOP
+// ============================================================================
+
+function animationLoop() {
+    if (appState.animationRunning) stepSimulation();
+    render();
+    updateInsights();
+    requestAnimationFrame(animationLoop);
+}
+
+// ============================================================================
+// INIT
+// ============================================================================
+
+function init() {
+    loadFromLocalStorage();
+    setupEventHandlers();
+    setupNodeActionListeners();
+    updatePeopleList();
+    updateInsights();
+    render();
+    restartSimulation();
+    animationLoop();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
