@@ -6,9 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#185fa5"
-      },
       "package": "com.rupesswatson.referralnetwork",
       "versionCode": 1
     },
